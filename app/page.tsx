@@ -1,3 +1,5 @@
+import ExploreBtn from "./componenst/ExploreBtn";
+
 function Page() {
 	return (
 		<section>
@@ -7,6 +9,7 @@ function Page() {
 			<p className="text-center mt-5">
 				Hackathons, Meetups, and Conferences, All in One Place
 			</p>
+			<ExploreBtn />
 		</section>
 	);
 }
