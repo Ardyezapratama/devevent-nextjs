@@ -1,8 +1,29 @@
-import { events } from "@/lib/constants";
+import { cacheLife } from "next/cache";
 import EventCard from "./componenst/EventCard";
 import ExploreBtn from "./componenst/ExploreBtn";
+import { IEvent } from "@/database";
 
-function Page() {
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
+
+async function Page() {
+	"use cache";
+	cacheLife("hours");
+
+	let events = [];
+
+	try {
+		if (!BASE_URL) {
+			throw new Error("NEXT_PUBLIC_BASE_URL is not defined");
+		}
+		const response = await fetch(`${BASE_URL}/api/events`);
+		if (!response.ok) {
+			throw new Error(`Failed to fetch events: ${response.statusText}`);
+		}
+		const data = await response.json();
+		events = data.events || [];
+	} catch (error) {
+		console.log("Error fetching events:", error);
+	}
 	return (
 		<>
 			<section className="mt-20">
@@ -19,11 +40,13 @@ function Page() {
 					<h3>Featured Event.</h3>
 
 					<ul className="events">
-						{events.map((event) => (
-							<li key={event.title} className="list-none">
-								<EventCard {...event} />
-							</li>
-						))}
+						{events &&
+							events.length > 0 &&
+							events.map((event: IEvent) => (
+								<li key={event.title} className="list-none">
+									<EventCard {...event} />
+								</li>
+							))}
 					</ul>
 				</div>
 			</section>
