@@ -27,6 +27,7 @@ const BookEvent = () => {
 							onChange={(e) => setEmail(e.target.value)}
 							id="email"
 							placeholder="Enter your email address"
+							required
 						/>
 					</div>
 					<button type="submit" className="button-submit">

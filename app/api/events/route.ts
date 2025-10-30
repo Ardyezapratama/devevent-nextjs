@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
-import { v2 as cloudinary } from "cloudinary";
 import { Event } from "@/database";
+import { v2 as cloudinary } from "cloudinary";
+
+cloudinary.config({
+	cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+	api_key: process.env.CLOUDINARY_API_KEY,
+	api_secret: process.env.CLOUDINARY_API_SECRETE,
+});
+
+if (!cloudinary.config().cloud_name) {
+	throw new Error("Cloudinary credentials are not confiugred");
+}
 
 export async function POST(req: NextRequest) {
 	try {
@@ -15,7 +25,7 @@ export async function POST(req: NextRequest) {
 			event = Object.fromEntries(formData.entries());
 		} catch (e) {
 			return NextResponse.json(
-				{ message: "Invalid JSON data format" },
+				{ message: "Invalid form data format" },
 				{ status: 400 }
 			);
 		}
@@ -27,8 +37,38 @@ export async function POST(req: NextRequest) {
 			);
 		}
 
-		let tags = JSON.parse(formData.get("tags") as string);
-		let agenda = JSON.parse(formData.get("agenda") as string);
+		// let tags = JSON.parse(formData.get("tags") as string);
+		// let agenda = JSON.parse(formData.get("agenda") as string);
+
+		// Parse and validae tags
+		const tagsRaw = formData.get("tags");
+		if (!tagsRaw) {
+			return NextResponse.json(
+				{
+					message: "Tags field is required!",
+				},
+				{ status: 400 }
+			);
+		}
+
+		const agendaRaw = formData.get("agenda");
+		if (!agendaRaw) {
+			return NextResponse.json(
+				{ message: "Agenda field is required!" },
+				{ status: 400 }
+			);
+		}
+
+		let tags, agenda;
+		try {
+			tags = JSON.parse(tagsRaw as string);
+			agenda = JSON.parse(agendaRaw as string);
+		} catch (error) {
+			return NextResponse.json(
+				{ message: "Invalid data format fro tags or agenda" },
+				{ status: 400 }
+			);
+		}
 
 		const arrayBuffer = await file.arrayBuffer();
 		const buffer = Buffer.from(arrayBuffer);
@@ -48,6 +88,17 @@ export async function POST(req: NextRequest) {
 				)
 				.end(buffer);
 		});
+
+		if (
+			!uploadResult ||
+			typeof uploadResult !== "object" ||
+			!("secure_url" in uploadResult)
+		) {
+			return NextResponse.json(
+				{ message: "Image upload failed - invalid response from Cloudinary" },
+				{ status: 500 }
+			);
+		}
 
 		event.image = (uploadResult as { secure_url: string }).secure_url;
 
@@ -78,7 +129,7 @@ export async function POST(req: NextRequest) {
 export async function GET() {
 	try {
 		await connectDB();
-		const events = await Event.find().sort({ cratedAt: -1 });
+		const events = await Event.find().sort({ createdAt: -1 });
 		return NextResponse.json(
 			{ message: "Event fetched successfully", events },
 			{ status: 200 }

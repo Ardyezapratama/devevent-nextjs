@@ -11,7 +11,7 @@ type RouterParams = {
 
 /**
  * Get /api/events/[slug]
- * Fetched a single event by its slug
+ * Fetches a single event by its slug
  */
 
 export async function GET(reg: NextRequest, { params }: RouterParams) {
@@ -30,7 +30,7 @@ export async function GET(reg: NextRequest, { params }: RouterParams) {
 			);
 		}
 
-		// Sanitaize slug (remove any potential malicious input)
+		// Sanitize slug (remove any potential malicious input)
 		const sanitizedSLug = slug.trim().toLowerCase();
 
 		// Query event by slug
@@ -49,12 +49,12 @@ export async function GET(reg: NextRequest, { params }: RouterParams) {
 			{ status: 200 }
 		);
 	} catch (e) {
-		// Log error debuging (only for development)
+		// Log error debugging (only for development)
 		if (process.env.NODE_ENV === "development") {
 			console.error("Error fetching events by slug: ", e);
 		}
 
-		// Handle spesific error types
+		// Handle specific error types
 		if (e instanceof Error) {
 			// Handle database connection error
 			if (e.message.includes("MONGODB_URI")) {

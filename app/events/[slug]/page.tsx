@@ -7,6 +7,10 @@ import { notFound } from "next/navigation";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
+if (!BASE_URL) {
+	throw new Error("NEXT_BASE_URL environment variable is required");
+}
+
 const EventDetailItem = ({
 	icon,
 	alt,
@@ -48,25 +52,36 @@ const EventDetailsPage = async ({
 }: {
 	params: Promise<{ slug: string }>;
 }) => {
+	"use cache";
 	const { slug } = await params;
-	const request = await fetch(`${BASE_URL}/api/events/${slug}`);
+	let request;
+
+	try {
+		request = await fetch(`${BASE_URL}/api/events/${slug}`);
+	} catch (error) {
+		console.log("Error fetching event:", error);
+		notFound();
+	}
+	const data = await request.json();
+	if (!data || !data.event) {
+		console.error("Invalid API response:", data);
+		notFound();
+	}
 	const {
-		event: {
-			title,
-			description,
-			image,
-			overview,
-			venue,
-			location,
-			date,
-			time,
-			mode,
-			audience,
-			agenda,
-			organizer,
-			tags,
-		},
-	} = await request.json();
+		title,
+		description,
+		image,
+		overview,
+		venue,
+		location,
+		date,
+		time,
+		mode,
+		audience,
+		agenda,
+		organizer,
+		tags,
+	} = data.event;
 	const booking = 10;
 
 	const similarEvents: IEvent[] = await getSimilarEventsBySlug(slug);
@@ -142,7 +157,7 @@ const EventDetailsPage = async ({
 
 			<div className="flex w-full flex-col gap-4 pt-20">
 				<h2>Similar Events</h2>
-				<div className="evenst">
+				<div className="events">
 					{similarEvents.length > 0 &&
 						similarEvents.map((similarEvent: IEvent) => (
 							<EventCard key={similarEvent.title} {...similarEvent} />
